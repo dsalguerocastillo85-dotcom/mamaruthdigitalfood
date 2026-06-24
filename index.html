@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mamá Ruth Digital Food</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <!-- Carga de Firebase (Librerías principales) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root {
+            --azul-oscuro: #1e3a5f;
+            --amarillo: #f5b041;
+            --negro: #111111;
+            --blanco: #ffffff;
+            --gris-claro: #f4f6f7;
+            --rojo: #e74c3c;
+            --verde-whatsapp: #25d366;
+            --gris-oscuro: #7f8c8d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        html, body {
+            min-height: 100%;
+        }
+
+        body {
+            background-color: var(--gris-claro);
+            color: var(--negro);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 0;
+            word-wrap: break-word;
+            overflow-x: hidden;
+        }
+
+        html {
+            min-width: 300px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            min-height: 100vh;
+            background: var(--blanco);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-radius: 12px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                max-width: 100%;
+                border-radius: 0;
+                box-shadow: none;
+                min-height: 100vh;
+                margin: 0;
+            }
+
+            body {
+                padding: 0;
+            }
+
+            .switch-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .switch-container select {
+                width: 100%;
+                margin-top: 8px;
+            }
+
+            .inline-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .form-group label,
+            .form-control,
+            .btn {
+                width: 100%;
+            }
+
+            .menu-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .menu-item-info {
+                padding: 10px;
+            }
+        }
+
+        header {
+            background-color: var(--azul-oscuro);
+            color: var(--blanco);
+            padding: 10px 12px;
+            text-align: center;
+            position: relative;
+            border-bottom: 4px solid var(--amarillo);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 8px 10px;
+            }
+        }
+
+        .logo-placeholder {
+            width: 90px;
+            height: 90px;
+            background: var(--blanco);
+            border: 3px solid var(--amarillo);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 480px) {
+            .logo-placeholder {
+                width: 70px;
+                height: 70px;
+                margin-bottom: 5px;
+            }
+        }
+
+        .logo-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
+            color: var(--amarillo);
+            font-weight: 700;
+            margin-top: 5px;
+            line-height: 1.2;
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1rem;
+                letter-spacing: 0px;
+            }
+        }
+
+        header h1 small {
+            display: block;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.9);
+            font-weight: 400;
+        }
+
+        .view {
+            display: none;
+            flex: 1;
+            padding: 15px;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 480px) {
+            .view {
+                padding: 12px;
+            }
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        h2 {
+            font-size: 1.15rem;
+            margin-bottom: 12px;
+            color: var(--azul-oscuro);
+            border-left: 4px solid var(--amarillo);
+            padding-left: 8px;
+        }
+
+        @media (max-width: 480px) {
+            h2 {
+                font-size: 1rem;
+                margin-bottom: 10px;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .form-group {
+                margin-bottom: 10px;
+            }
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.3s;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        @media (max-width: 480px) {
+            .form-control {
+                padding: 8px;
+                font-size: 0.9rem;
+            }
+        }
+
+        .form-control:focus {
+            border-color: var(--azul-oscuro);
+        }
+
+        .form-control,
+        .menu-item-title,
+        .menu-item-price,
+        .login-debtors,
+        .debtor-list-login {
+            word-break: break-word;
+        }
+
+        .btn {
+            background-color: var(--azul-oscuro);
+            color: var(--blanco);
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-small {
+            width: auto !important;
+            padding: 6px 10px !important;
+            font-size: 0.8rem !important;
+            margin: 0 !important;
+            min-height: auto !important;
+        }
+
+        .btn-warning {
+            background-color: var(--amarillo);
+            color: var(--negro);
+        }
+
+        .btn-danger {
+            background-color: var(--rojo);
+        }
+
+        .btn-whatsapp {
+            background-color: var(--verde-whatsapp);
+            margin-top: 15px;
+        }
+
+        .menu-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .menu-item {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            overflow: hidden;
+            display: flex;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .menu-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+        }
+
+        @media (max-width: 480px) {
+            .menu-item {
+                margin-bottom: 8px;
+            }
+            .menu-item img {
+                width: 70px;
+                height: 70px;
+            }
+        }
+
+        .menu-item-info {
+            padding: 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .menu-item-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: var(--negro);
+        }
+
+        .menu-item-price {
+            color: var(--azul-oscuro);
+            font-weight: 700;
+            font-size: 1rem;
+            margin-top: 2px;
+        }
+
+        .floating-admin-btn {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            background-color: var(--azul-oscuro);
+            color: var(--amarillo);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            cursor: pointer;
+            z-index: 999;
+            border: 2px solid var(--amarillo);
+        }
+
+        @media (max-width: 480px) {
+            .floating-admin-btn {
+                width: 40px;
+                height: 40px;
+                bottom: 12px;
+                right: 12px;
+            }
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 480px) {
+            .admin-table {
+                font-size: 0.75rem;
+            }
+        }
+
+        .admin-table th,
+        .admin-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .admin-table th {
+            background-color: var(--azul-oscuro);
+            color: white;
+        }
+
+        .action-icons span {
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .badge-disabled {
+            background: var(--rojo);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        .badge-enabled {
+            background: var(--verde-whatsapp);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        .switch-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #eee;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .password-input-wrapper .form-control {
+            padding-right: 45px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            color: var(--azul-oscuro);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .login-debtors {
+            margin-top: 12px;
+            background: #fff9ec;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #fee8c3;
+        }
+
+        .login-debtors h3 {
+            margin: 0 0 6px 0;
+            font-size: 0.9rem;
+            color: var(--azul-oscuro);
+        }
+
+        .debtor-list-login {
+            list-style: disc inside;
+            max-height: 100px;
+            overflow: auto;
+            padding-left: 10px;
+            font-size: 0.85rem;
+            color: #444;
+        }
+
+        small.description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .inline-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .inline-row .form-control {
+            padding: 8px;
+        }
+
+        @media (max-width: 480px) {
+            .inline-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            .inline-row .form-control {
+                width: 100%;
+            }
+        }
+
+        .badge-strong {
+            font-weight: 700;
+        }
+
+        /* ===== MEJORAS PARA TABLAS EN MÓVIL ===== */
+        @media (max-width: 480px) {
+            .admin-table {
+                width: 100%;
+                display: block;
+                overflow-x: auto;
+                border-collapse: collapse;
+                font-size: 0.75rem;
+            }
+            
+            .admin-table thead {
+                display: none;
+            }
+            
+            .admin-table tbody {
+                display: block;
+            }
+            
+            .admin-table tr {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1px;
+                margin-bottom: 10px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                overflow: hidden;
+                background: white;
+            }
+            
+            .admin-table td {
+                padding: 8px;
+                border: none;
+                display: flex;
+                align-items: center;
+                font-size: 0.8rem;
+                word-break: break-word;
+            }
+            
+            .admin-table td:before {
+                content: attr(data-label);
+                font-weight: bold;
+                margin-right: 8px;
+                min-width: 60px;
+                color: var(--azul-oscuro);
+            }
+        }
+
+        /* ===== MEJORAS PARA INPUTS EN PANEL ADMIN ===== */
+        @media (max-width: 480px) {
+            #dish-name,
+            #dish-price,
+            #dish-file,
+            #debtor-name {
+                width: 100%;
+                padding: 8px;
+                font-size: 0.9rem;
+                min-height: 44px;
+            }
+            
+            .form-group input[type="checkbox"] {
+                min-width: 24px;
+                min-height: 24px;
+                width: 24px;
+                height: 24px;
+            }
+        }
+
+        /* ===== MEJORAS PARA HEADER EN MÓVIL ===== */
+        @media (max-width: 480px) {
+            header {
+                padding: 8px 10px;
+                min-height: auto;
+            }
+            
+            .logo-placeholder {
+                width: 60px;
+                height: 60px;
+                margin-bottom: 4px;
+            }
+            
+            header h1 {
+                font-size: 0.95rem;
+                letter-spacing: 0px;
+                line-height: 1.1;
+            }
+        }
+
+        /* ===== MEJORAS PARA SECCIONES DE CONTENIDO ===== */
+        @media (max-width: 480px) {
+            .view {
+                padding: 10px 8px 14px 8px;
+            }
+            
+            h2 {
+                font-size: 0.95rem;
+                margin-bottom: 8px;
+                padding-left: 6px;
+            }
+            
+            h3 {
+                font-size: 0.85rem;
+                margin-bottom: 8px;
+            }
+            
+            p {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* ===== MEJORAS PARA BOTONES EN MÓVIL ===== */
+        @media (max-width: 480px) {
+            .btn {
+                padding: 10px 8px;
+                font-size: 0.85rem;
+                min-height: 44px;
+                gap: 6px;
+            }
+            
+            .btn .material-icons {
+                font-size: 18px;
+            }
+            
+            .btn-small {
+                width: auto;
+                padding: 6px 10px;
+                font-size: 0.75rem;
+                margin: 0;
+            }
+        }
+
+        /* ===== MEJORAS PARA SWITCH CONTAINER ===== */
+        @media (max-width: 480px) {
+            .switch-container {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            .switch-container select {
+                width: 100%;
+                margin-top: 0;
+            }
+        }
+
+        /* ===== MEJORAS PARA MENÚ EN MÓVIL ===== */
+        @media (max-width: 480px) {
+            .menu-grid {
+                gap: 10px;
+            }
+            
+            .menu-item {
+                flex-direction: column;
+                margin-bottom: 6px;
+            }
+            
+            .menu-item img {
+                width: 100%;
+                height: 150px;
+                min-width: auto;
+            }
+            
+            .menu-item-info {
+                padding: 10px;
+            }
+            
+            .menu-item-title {
+                font-size: 0.9rem;
+            }
+            
+            .menu-item-price {
+                font-size: 0.95rem;
+            }
+        }
+
+        /* ===== MEJORAS PARA LISTAS EN MÓVIL ===== */
+        @media (max-width: 480px) {
+            #debtor-list {
+                font-size: 0.85rem;
+                padding-left: 16px;
+            }
+            
+            .debtor-list-login {
+                font-size: 0.8rem;
+                max-height: 120px;
+            }
+            
+            .login-debtors {
+                padding: 8px;
+                margin-top: 12px;
+            }
+            
+            .login-debtors h3 {
+                font-size: 0.85rem;
+                margin-bottom: 6px;
+            }
+        }
+
+        /* ===== POSICIÓN FLOTANTE ADMIN EN MÓVIL ===== */
+        @media (max-width: 480px) {
+            .floating-admin-btn {
+                position: fixed;
+                bottom: 12px;
+                right: 12px;
+                width: 48px;
+                height: 48px;
+                z-index: 100;
+            }
+        }
+
+        /* ===== ESTILOS PARA INPUTS CON MEJOR ACCESO EN MÓVIL ===== */
+        @media (max-width: 480px) {
+            input[type="text"],
+            input[type="email"],
+            input[type="number"],
+            input[type="password"],
+            select,
+            textarea {
+                font-size: 16px;
+                min-height: 44px;
+            }
+        }
+
+        /* ===== OPTIMIZACIÓN DE ESPACIOS Y OVERFLOW ===== */
+        @media (max-width: 480px) {
+            .form-group {
+                margin-bottom: 10px;
+            }
+            
+            .form-group label {
+                font-size: 0.85rem;
+                margin-bottom: 4px;
+            }
+            
+            .password-input-wrapper .form-control {
+                padding-right: 40px;
+            }
+            
+            .password-toggle {
+                right: 8px;
+                font-size: 20px;
+            }
+        }
+
+        /* ===== SOPORTE PARA PANTALLAS MÁS PEQUEÑAS (< 360px) ===== */
+        @media (max-width: 360px) {
+            .app-container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            header {
+                padding: 6px 8px;
+            }
+            
+            .logo-placeholder {
+                width: 50px;
+                height: 50px;
+            }
+            
+            header h1 {
+                font-size: 0.85rem;
+            }
+            
+            .view {
+                padding: 8px 6px 10px 6px;
+            }
+            
+            h2 {
+                font-size: 0.85rem;
+                margin-bottom: 6px;
+            }
+            
+            h3 {
+                font-size: 0.8rem;
+            }
+            
+            .form-control,
+            input[type="text"],
+            input[type="email"],
+            input[type="number"],
+            input[type="password"],
+            select {
+                font-size: 14px;
+                padding: 8px;
+            }
+            
+            .btn {
+                padding: 8px 6px;
+                font-size: 0.75rem;
+            }
+            
+            .floating-admin-btn {
+                width: 44px;
+                height: 44px;
+                bottom: 8px;
+                right: 8px;
+            }
+            
+            .menu-item img {
+                height: 120px;
+            }
+            
+            .admin-table td {
+                font-size: 0.7rem;
+                padding: 6px;
+            }
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 480px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div class="floating-admin-btn" onclick="openLoginAdmin()">
+            <span class="material-icons">admin_panel_settings</span>
+        </div>
+
+        <header>
+            <div class="logo-placeholder">
+                <img src="mama ruth logo.jpg" id="main-app-logo" alt="MR">
+            </div>
+            <h1>MAMÁ RUTH DIGITAL FOOD</h1>
+        </header>
+
+        <div id="view-welcome" class="view active">
+            <h2>Datos del Estudiante</h2>
+            <p style="font-size: 0.9rem; color:#666; margin-bottom:15px;">Ingresa tu información para ordenar tu almuerzo.</p>
+            
+           <div class="form-group">
+                <label>Correo Electrónico:</label>
+                <input type="email" id="student-email" class="form-control" placeholder="ejemplo@correo.com" required>
+            </div>
+
+            <div class="form-group">
+                <label>Grado / Año de Bachillerato:</label>
+                <select id="student-grade" class="form-control" required>
+                    <option value="" disabled selected>Selecciona tu grado</option>
+                    <option value="Docente">Docente</option>
+                    <option value="7mo Grado">Séptimo Grado</option>
+                    <option value="8vo Grado">Octavo Grado</option>
+                    <option value="9no Grado">Noveno Grado</option>
+                    <option value="1er Año A">Primer Año A</option>
+                    <option value="1er Año B">Primer Año B</option>
+                    <option value="2do Año A">Segundo Año A</option>
+                    <option value="2do Año B">Segundo Año B</option>
+                    <option value="2do Año C">Segundo Año C</option>
+                </select>
+            </div>
+
+            <button type="button" id="student-login-btn" class="btn btn-warning">
+                Ingresar <span class="material-icons">arrow_forward</span>
+            </button>
+            <div class="login-debtors">
+                <h3>Estudiantes Deudores</h3>
+                <ul id="debtor-list-login" class="debtor-list-login"></ul>
+            </div>
+        </div>
+
+        <div id="view-menu" class="view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin:0;">Menú del Día</h2>
+                <button class="btn btn-danger btn-small" onclick="logoutStudent()">Salir</button>
+            </div>
+            <div id="menu-list" class="menu-grid"></div>
+        </div>
+
+        <div id="view-login-admin" class="view">
+            <h2>Acceso Administrativo</h2>
+            <div class="form-group">
+                <label>Usuario:</label>
+                <input type="text" id="admin-user" class="form-control" placeholder="Ricardo o Alejandro">
+            </div>
+            <div class="form-group">
+                <label>Contraseña:</label>
+                <div class="password-input-wrapper">
+                    <input type="password" id="admin-pass" class="form-control" placeholder="••••••••">
+                    <span class="material-icons password-toggle" id="admin-pass-toggle" onclick="toggleAdminPasswordVisibility()">visibility</span>
+                </div>
+            </div>
+            <button class="btn" onclick="loginAdminSubmit()">Autenticar</button>
+            <button class="btn btn-danger" style="background:transparent; color:var(--rojo);" onclick="navigateTo('view-welcome')">Cancelar</button>
+        </div>
+
+        <div id="view-panel-admin" class="view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin:0;">Panel de Control</h2>
+                <button class="btn btn-danger btn-small" onclick="logoutAdmin()">Cerrar Panel</button>
+            </div>
+
+            <div class="switch-container">
+                <span style="font-weight: 600;"><strong>Estado del Servicio:</strong></span>
+                <select id="service-status" class="form-control" onchange="toggleServiceStatus()">
+                    <option value="activo">Pedidos Activos</option>
+                    <option value="inactivo">Pedidos Desactivados</option>
+                </select>
+            </div>
+
+            <div style="background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
+                <h3 style="font-size:0.95rem; margin-bottom:10px; color:var(--azul-oscuro);" id="form-admin-title">Agregar / Editar Plato</h3>
+                <input type="hidden" id="edit-index" value="-1">
+                
+                <div class="form-group">
+                    <input type="text" id="dish-name" class="form-control" placeholder="Nombre de la comida">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="dish-price" class="form-control" placeholder="Precio ($)" step="0.01">
+                </div>
+                
+                <div class="form-group">
+                    <label style="font-size:0.85rem;">Foto del Plato:</label>
+                    <input type="file" id="dish-file" class="form-control" accept="image/*">
+                </div>
+
+                <div class="form-group" style="display:flex; gap:10px; align-items:center;">
+                    <label style="margin:0; font-size:0.85rem; flex: 1;">¿Está disponible hoy?</label>
+                    <input type="checkbox" id="dish-available" checked style="width:24px; height:24px; cursor:pointer;">
+                </div>
+                <button class="btn btn-warning" id="btn-save-dish" onclick="saveDish()">Guardar Plato</button>
+            </div>
+
+            <h3>Menú Configurado (Semanal)</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Plato</th>
+                        <th>Precio</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-table-body"></tbody>
+            </table>
+
+            <h3 style="margin-top:20px;">Lista de Estudiantes Deudores</h3>
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <input type="text" id="debtor-name" class="form-control" placeholder="Nombre del alumno" style="flex: 1;">
+                <button class="btn btn-small" onclick="addDebtor()" style="width:auto;"><span class="material-icons" style="font-size:20px;">add</span></button>
+            </div>
+            <ul id="debtor-list" style="font-size:0.9rem; padding-left:20px; padding-bottom: 40px;"></ul>
+        </div>
+
+    </div>
+
+    <script>
+        const WHATSAPP_NUMBER = "50379882740";
+
+        // CONFIGURACIÓN DE TU BASE DE DATOS FIREBASE
+        const firebaseConfig = {
+            databaseURL: "https://mama-ruth-app-default-rtdb.firebaseio.com/"
+        };
+        
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Estructura de platos iniciales por defecto (si la base de datos está vacía)
+        let defaultMenu = [
+            { name: "Pollo con queso gratinado", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Tacos de res o pollo", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Burrito de res o pollo", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Carne a la plancha", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Pechuga a la plancha", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Quesadillas de res o pollo", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Pasta corta", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Sopa de tortilla", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Pollo al ajillo con papas", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Chorizo con casamiento", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Pollo en salsa de hongos", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Pechuga empanizada", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Sandwich gurmet jamon o pollo", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false },
+            { name: "Lasaña de res o pollo", price: 2.75, img: "https://via.placeholder.com/150?text=Comida", available: false }
+        ];
+
+        let menuData = [];
+        let debtorData = [];
+        let manualServiceStatus = "activo";
+        let currentUploadedImgBase64 = "";
+        let currentStudent = { email: "", grade: "" };
+
+        function initializeApp() {
+            // Escucha en tiempo real el Estado del Servicio para todos los usuarios
+            database.ref('serviceStatus').on('value', (snapshot) => {
+                manualServiceStatus = snapshot.val() || "activo";
+                const serviceStatusEl = document.getElementById('service-status');
+                if (serviceStatusEl) serviceStatusEl.value = manualServiceStatus;
+            });
+
+            // Escucha en tiempo real la Lista de Almuerzos para todos los usuarios
+            database.ref('menu').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    menuData = data;
+                } else {
+                    menuData = defaultMenu;
+                    database.ref('menu').set(defaultMenu);
+                }
+                renderMenuStudent();
+                renderMenuAdmin();
+            });
+
+            // Escucha en tiempo real la Lista de Deudores para todos los usuarios
+            database.ref('debtors').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data && Array.isArray(data)) {
+                    debtorData = data;
+                } else if (data === null) {
+                    debtorData = ["Juan Pérez", "María Quintanilla"];
+                    database.ref('debtors').set(debtorData);
+                } else {
+                    debtorData = [];
+                }
+                renderDebtors();
+            });
+
+            const dishFile = document.getElementById('dish-file');
+            if (dishFile) {
+                dishFile.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        if (file.size > 1024 * 1024) {
+                            alert("La imagen es muy grande. Elige una foto más pequeña para evitar que el teléfono se trabe.");
+                            this.value = "";
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            currentUploadedImgBase64 = event.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            const loginButton = document.getElementById('student-login-btn');
+            if (loginButton) {
+                loginButton.addEventListener('click', loginStudent);
+            }
+
+            const savedEmail = localStorage.getItem('savedStudentEmail');
+            if (savedEmail) {
+                const emailField = document.getElementById('student-email');
+                if (emailField) {
+                    emailField.value = savedEmail;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function navigateTo(viewId) {
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function capitalize(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+        }
+
+        function parseNameFromEmail(email) {
+            if (!email || typeof email !== 'string') return { name: '', lastname: '' };
+            const local = email.split('@')[0];
+            const cleaned = local.replace(/[._\-+]+/g, ' ').trim();
+            const parts = cleaned.split(/\s+/).filter(Boolean);
+            if (parts.length === 0) return { name: local, lastname: '' };
+            if (parts.length === 1) {
+                return { name: capitalize(parts[0]), lastname: '' };
+            }
+            return { name: capitalize(parts[0]), lastname: parts.slice(1).map(capitalize).join(' ') };
+        }
+
+        function loginStudent() {
+            const emailEl = document.getElementById('student-email');
+            const gradeEl = document.getElementById('student-grade');
+            if (!emailEl || !gradeEl) {
+                alert("Error interno: no se encuentran los campos de acceso.");
+                return;
+            }
+
+            const email = emailEl.value.trim();
+            const grade = gradeEl.value.trim();
+
+            if (!email || !grade) {
+                alert("Por favor completa tus datos.");
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Por favor ingresa un correo electrónico válido.");
+                return;
+            }
+
+            const parsed = parseNameFromEmail(email);
+            currentStudent = { email, grade, name: parsed.name, lastname: parsed.lastname };
+
+            if (manualServiceStatus === "inactivo") {
+                alert("Lo sentimos, la cafetería ha cerrado la recepción de pedidos en este momento.");
+                return;
+            }
+
+            localStorage.setItem('savedStudentEmail', email);
+            renderMenuStudent();
+            navigateTo('view-menu');
+        }
+
+        function logoutStudent() {
+            document.getElementById('student-email').value = localStorage.getItem('savedStudentEmail') || "";
+            document.getElementById('student-grade').value = "";
+            currentStudent = { email: "", grade: "" };
+            navigateTo('view-welcome');
+        }
+
+        function renderMenuStudent() {
+            const container = document.getElementById('menu-list');
+            if (!container) return;
+            container.innerHTML = "";
+            const availableItems = menuData.filter(item => item.available);
+
+            if (availableItems.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#888; margin-top:20px;">No hay platos disponibles por ahora.</p>`;
+                return;
+            }
+
+            availableItems.forEach((item) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "menu-item";
+                itemDiv.innerHTML = `
+                    <img src="${escapeHtml(item.img)}" onerror="this.src='https://via.placeholder.com/150?text=Comida'">
+                    <div class="menu-item-info">
+                        <div>
+                            <div class="menu-item-title">${escapeHtml(item.name)}</div>
+                            <div class="menu-item-price">$${parseFloat(item.price).toFixed(2)}</div>
+                        </div>
+                        <button class="btn btn-whatsapp" style="padding: 6px 10px; font-size:0.85rem; margin-top:5px;" onclick="orderProduct('${escapeHtml(item.name).replace(/'/g, "\\'")}')" data-dish-name="${escapeHtml(item.name)}">
+                            <span class="material-icons" style="font-size:1rem;">send</span> Enviar Pedido
+                        </button>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function orderProduct(dishName) {
+            const message = `Hola Don Ricardo, buenos días.\nSoy ${currentStudent.email} de ${currentStudent.grade}.\nQuiero pedir: ${dishName}.`;
+            const encodedText = encodeURIComponent(message);
+            const targetUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodedText}`;
+            window.open(targetUrl, '_blank');
+        }
+
+        function openLoginAdmin() {
+            navigateTo('view-login-admin');
+        }
+
+        function loginAdminSubmit() {
+            const user = document.getElementById('admin-user').value.trim().toLowerCase();
+            const pass = document.getElementById('admin-pass').value.trim();
+
+            const validAdmin = (
+                (user === "ricardo" && pass === "Carcamo2456") ||
+                (user === "ricardo lopez" && pass === "Carcamo2456") ||
+                (user === "alejandro" && pass === "Carcamo 9808") ||
+                (user === "alejandro lopez" && pass === "Carcamo 9808")
+            );
+
+            if (validAdmin) {
+                document.getElementById('admin-user').value = "";
+                document.getElementById('admin-pass').value = "";
+                navigateTo('view-panel-admin');
+            } else {
+                alert("Acceso denegado.");
+            }
+        }
+
+        function toggleAdminPasswordVisibility() {
+            const passEl = document.getElementById('admin-pass');
+            const toggleIcon = document.getElementById('admin-pass-toggle');
+            if (!passEl || !toggleIcon) return;
+
+            if (passEl.type === 'password') {
+                passEl.type = 'text';
+                toggleIcon.textContent = 'visibility_off';
+            } else {
+                passEl.type = 'password';
+                toggleIcon.textContent = 'visibility';
+            }
+        }
+
+        function logoutAdmin() {
+            navigateTo('view-welcome');
+        }
+
+        function toggleServiceStatus() {
+            const val = document.getElementById('service-status').value;
+            database.ref('serviceStatus').set(val);
+        }
+
+        function toggleDishAvailability(index) {
+            menuData[index].available = !menuData[index].available;
+            database.ref('menu').set(menuData);
+        }
+
+        function renderMenuAdmin() {
+            const tbody = document.getElementById('admin-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            menuData.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                
+                const statusBadge = item.available 
+                    ? `<span class="badge-enabled" style="cursor:pointer;" onclick="toggleDishAvailability(${index})">Activo (Presiona para apagar)</span>` 
+                    : `<span class="badge-disabled" style="cursor:pointer; background-color:var(--gris-oscuro);" onclick="toggleDishAvailability(${index})">Inactivo (Presiona para encender)</span>`;
+
+                tr.innerHTML = `
+                    <td data-label="Plato">${escapeHtml(item.name)}</td>
+                    <td data-label="Precio">$${parseFloat(item.price).toFixed(2)}</td>
+                    <td data-label="Estado">${statusBadge}</td>
+                    <td data-label="Acción" class="action-icons">
+                        <span class="material-icons" style="color:#f1c40f; cursor:pointer;" onclick="editDishForm(${index})">edit</span>
+                        <span class="material-icons" style="color:#e74c3c; cursor:pointer;" onclick="deleteDish(${index})">delete</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function saveDish() {
+            const name = document.getElementById('dish-name').value.trim();
+            const price = parseFloat(document.getElementById('dish-price').value);
+            const available = document.getElementById('dish-available').checked;
+            const editIndex = parseInt(document.getElementById('edit-index').value, 10);
+
+            if (!name) {
+                alert("Por favor ingresa el nombre del plato.");
+                return;
+            }
+
+            if (isNaN(price) || price <= 0) {
+                alert("Por favor ingresa un precio válido (mayor a 0).");
+                return;
+            }
+
+            let finalImg = currentUploadedImgBase64;
+            if (!finalImg) {
+                finalImg = (editIndex !== -1) ? menuData[editIndex].img : "https://via.placeholder.com/150?text=Comida";
+            }
+
+            const dishObject = { name, price, img: finalImg, available };
+
+            if (editIndex === -1) {
+                menuData.push(dishObject);
+            } else {
+                menuData[editIndex] = dishObject;
+                document.getElementById('edit-index').value = "-1";
+                document.getElementById('form-admin-title').innerText = "Agregar / Editar Plato";
+            }
+
+            database.ref('menu').set(menuData).then(() => {
+                document.getElementById('dish-name').value = "";
+                document.getElementById('dish-price').value = "";
+                document.getElementById('dish-file').value = "";
+                currentUploadedImgBase64 = "";
+                document.getElementById('dish-available').checked = true;
+                alert("Menú guardado con éxito en la nube.");
+            });
+        }
+
+        function editDishForm(index) {
+            const item = menuData[index];
+            document.getElementById('dish-name').value = item.name;
+            document.getElementById('dish-price').value = item.price;
+            document.getElementById('dish-available').checked = item.available;
+            document.getElementById('edit-index').value = index;
+            document.getElementById('form-admin-title').innerText = "Modificando Plato N° " + (index + 1);
+            currentUploadedImgBase64 = "";
+        }
+
+        function deleteDish(index) {
+            if (confirm("¿Eliminar este almuerzo?")) {
+                menuData.splice(index, 1);
+                database.ref('menu').set(menuData);
+            }
+        }
+
+        function renderDebtors() {
+            const list = document.getElementById('debtor-list');
+            if (!list) return;
+            list.innerHTML = "";
+            debtorData.forEach((name, index) => {
+                const li = document.createElement('li');
+                li.style.marginBottom = "5px";
+                li.innerHTML = `
+                    ${escapeHtml(name)}
+                    <span class="material-icons" style="font-size:1rem; color:red; cursor:pointer; vertical-align:middle; margin-left:10px;" onclick="removeDebtor(${index})">remove_circle</span>
+                `;
+                list.appendChild(li);
+            });
+
+            const loginList = document.getElementById('debtor-list-login');
+            if (loginList) {
+                loginList.innerHTML = "";
+                const preview = debtorData.slice(0, 6);
+                preview.forEach((name) => {
+                    const li2 = document.createElement('li');
+                    li2.textContent = name;
+                    loginList.appendChild(li2);
+                });
+                if (debtorData.length > 6) {
+                    const more = document.createElement('li');
+                    more.textContent = `... y ${debtorData.length - 6} más`;
+                    more.style.fontStyle = 'italic';
+                    loginList.appendChild(more);
+                }
+            }
+        }
+
+        function addDebtor() {
+            const nameInput = document.getElementById('debtor-name');
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert("Por favor ingresa un nombre.");
+                return;
+            }
+            if (debtorData.includes(name)) {
+                alert("Este estudiante ya está en la lista de deudores.");
+                return;
+            }
+            debtorData.push(name);
+            database.ref('debtors').set(debtorData).then(() => {
+                nameInput.value = "";
+            });
+        }
+
+        function removeDebtor(index) {
+            debtorData.splice(index, 1);
+            database.ref('debtors').set(debtorData);
+        }
+    </script>
+</body>
+</html>
